@@ -1,58 +1,78 @@
 package schiemannjeremy.nn;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
+
+/**
+ * A class that contains all the training sets for training the neural network.
+ * @author Jeremy Schiemann
+ *
+ */
 public class TrainingData {
 	
-	private LinkedList<double[]> training_input_list;
-	private LinkedList<double[]> training_output_list;
+	private ArrayList<TrainingSet> trainingSets;
 	
-	
+	/**
+	 * Constructs a TrainingData object
+	 */
 	public TrainingData(){
-		this.training_input_list =  new LinkedList<>();
-		this.training_output_list = new LinkedList<>();
+		this.trainingSets = new ArrayList<>();
 	}
 	
-	public TrainingData(double[][] input_data, double[][] output_data) {
+	/**
+	 * Constructs a TrainingData object and adds the training sets.
+	 * @param training_data - the training sets which should be added.
+	 */
+	public TrainingData(TrainingSet[] training_data) {
 		
 		super();
-		
-		if(input_data.length != output_data.length) throw new IllegalArgumentException("Input and Output data must be of same length");
-		
-		for(int i = 0; i < input_data.length; i++) {
-			this.add(input_data[i], output_data[i]);
+				
+		for(int i = 0; i < training_data.length; i++) {
+			this.add(training_data[i]);
 		}
-	
 	}
 		
-	public boolean add(double[] input_data, double[] output_data){
+	/**
+	 * Adds a new TrainingSet object to the collection
+	 * @param trainingSet - the TrainingSet object that should be added
+	 * @return - true if operation was successful
+	 */
+	public boolean add(TrainingSet trainingSet){
 		
-		if(this.training_input_list.add(input_data) && this.training_output_list.add(output_data))
+		if(this.trainingSets.add(trainingSet))
 			return true;
-		else return false;
+		else 
+			return false;
 	}
 	
-	public double[][] getInputData(){
-		
-		double[][] input_data = new double[this.training_input_list.size()][];
-		
-		
-		for(int i = 0; i < input_data.length; i++) {
-			input_data[i] = this.training_input_list.get(i);
-		}
-		
-		return input_data;
+	
+	/**
+	 * Returns the number of TrainingSet Objects in this list
+	 * @return returns the number of TrainingSet Objects in this list
+	 */
+	public int size() {
+		return this.trainingSets.size();
 	}
 	
-	public double[][] getOutputData(){
+	/**
+	 * Returns the TrainingSet Object at the specified location
+	 * @param index - the locations
+	 * @return - the TrainingSet object
+	 * @throws IndexOutOfBoundsException if the index is out of range
+	 */
+	public TrainingSet getTrainingSet(int index){
 		
-		double[][] output_data = new double[this.training_output_list.size()][];
+		return this.trainingSets.get(index);
+	}
+	
+	/**
+	 * returns a random TrainingSet Object.
+	 * @return - the TrainingSet Object
+	 */
+	public TrainingSet getRandomSet(){
 		
-		for(int i = 0; i < output_data.length; i++) {
-			output_data[i] = this.training_output_list.get(i);
-		}
-		
-		return output_data;
+		int random = (int)(Math.random()*this.trainingSets.size());
+		return this.trainingSets.get(random);	
 	}
 
 }

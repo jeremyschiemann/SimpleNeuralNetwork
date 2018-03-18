@@ -2,63 +2,31 @@ package schiemannjeremy.nn;
 
 import schiemannjeremy.linearalgebra.Matrix;
 
-public class NeuralNetwork {
 
-//	public static void main(String[] args) {
-//		
-//		NeuralNetwork nn = new  NeuralNetwork(2,50,100, 50, 1);
-//		nn.setActivationFunction(ActivationFunction.TAN_H);
-//		
-//		
-//		nn.randomizeWeights(-1, 1);
-//		nn.randomizeBiases(-1, 1);
-//		
-//		
-//		
-//		
-//		for(double d : nn.predict(new double[] {42.3, -42.3}))
-//			System.out.print("sin("+42.3+ ") equals " + d +  ", ");
-//		
-//		System.out.println();
-//		
-//
-//		
-//		//train
-//		double[][] input_training = new double[10000][2]; 
-//		double[][] output_training = new double[10000][1];
-//		
-//		for(int i = 0; i < input_training.length; i++) {
-//			double x = Math.random();
-//			input_training[i][0] = x*100;
-//			input_training[i][1] = -x*100;
-//			output_training[i][0] = Math.sin(x*100);
-//		}
-//
-//
-//			
-//		for(int i = 0; i < 10; i ++) {
-//			String d = String.format("%.16f", nn.calculateError(input_training, output_training));
-//			System.out.println("" + i + ". error: " + d);
-//			nn.train(input_training, output_training, 0.05, 50000);
-//		}
-//			
-//		
-//
-//		for(double d : nn.predict(new double[] {42.3, -42.3}))
-//			System.out.print("sin("+42.3+ ") equals " + d +  ", ");
-//		
-//	}
+/**
+ * NeuralNetwork class for constructing, training and predicting data </br>
+ * @author Jeremy Schiemann
+ *
+ */
+public class NeuralNetwork {
 	
 	private final int[] LAYERS;
 	private Matrix[] weights;
 	private Matrix[] biases;
 	
 	private ActivationFunction func;
-
 	
-	//TODO: aktivierungsfunktion änderbar machen
-	//TODO: verschiedene Aktivierungsfunktionen implementieren
-	
+	/**
+	 * Constructs a new NeuralNetwork with any amount of layers > 2 </br>
+	 * The first value will be the amount of input neurons, last value will be the amount of output neurons. <br/>
+	 * Everything in between will be the amount of hidden neurons </br> </br>
+	 * 
+	 * By default the activation function will be sigmoid ({@link schiemannjeremy.nn.ActivationFunction#SIGMOID}). </br>
+	 * Weights will be 0, but can be randomized with {@link #randomizeWeights(int, int)} </br>
+	 * Biases will be 0, but can be randomized with {@link #randomizeBiases(int, int)} </br>
+	 * 
+	 * @param layers - an array with the number of nodes per layer, implemented argument of variable length
+	 */
 	public NeuralNetwork(int... layers) {
 		
 		if(layers.length < 2) throw new IllegalArgumentException("NeuralNetwork needs at least 2 Layers, one for input, one for output");
@@ -76,25 +44,51 @@ public class NeuralNetwork {
 		this.func = ActivationFunction.SIGMOID;
 	}
 	
+	/**
+	 * Set the activation function used by the neurons </br>
+	 * Most common ones are already implemented in the ActivationFunction interface itself.
+	 * @see schiemannjeremy.nn.ActivationFunction
+	 * @param func - an ActivationFunction 
+	 */
 	public void setActivationFunction(ActivationFunction func) {
 		this.func = func;
 	}
 	
+	/**
+	 * Randomizes the weights in the give range excluding the upper limit.
+	 * @param from - lower limit
+	 * @param to - upper limit
+	 * @throws IllegalArgumentException when the lower limit is higher than the upper limit
+	 */
 	public void randomizeWeights(int from, int to) {
+		
+		if(from > to) throw new IllegalArgumentException("lower limit must be less than upper limit");
 		
 		for(Matrix m : this.weights)
 			m.randomize(from, to, false);
 		
 	}
 	
+	/**
+	 * Randomizes the biases in the give range excluding the upper limit.
+	 * @param from - lower limit
+	 * @param to - upper limit
+	 * @throws IllegalArgumentException when the lower limit is higher than the upper limit
+	 */
 	public void randomizeBiases(int from, int to) {	
+		
+		if(from > to) throw new IllegalArgumentException("lower limit must be less than upper limit");
 		
 		for(Matrix m : this.biases)
 			m.randomize(from, to, false);
 	}
-	
-	
-	
+
+	/**
+	 * Feeds the give data to the neural network and return the result
+	 * @param input_array - an array containing every value for the inputs
+	 * @return an array containing every output
+	 * @throws IllegalArgumentException when the size of the input array doesnt match the inputs of the neural network
+	 */
 	public double[] predict(double[] input_array) {
 		
 		if(input_array.length != this.LAYERS[0]) throw new IllegalArgumentException("" + this.LAYERS[0] + " inputs excpected, but " + input_array.length + " received");
@@ -113,29 +107,39 @@ public class NeuralNetwork {
 
 	}
 	
-
-	public void train(double[][] inputs, double[][] outputs, double learningRate, int iterations) {
+	/**
+	 *  Trains the neural network using backpropagation </br>
+	 * 	During each iteration the neural network gets trained with one randomly picked training set. </br>
+	 * 
+	 * @param trainingData - the data used for training
+	 * @param learningRate - the learning rate > 0
+	 * @param iterations - the amount of training iterations
+	 * @throws IllegalArgumentException if the learning rate is <= 0 or if the iterations are <= 0
+	 */
+	public void train(TrainingData trainingData, double learningRate, int iterations) {
 		
-		if(inputs.length != outputs.length) throw new IllegalArgumentException("length of inputs and outputs arrays must be the same");
 		if(learningRate <= 0) throw new IllegalArgumentException("learning rate must be >0");
 		if(iterations <= 0) throw new IllegalArgumentException("must at least do one iteration");
 		
-		
 		for(int i = 0; i < iterations; i++) {
-				
-			int index = (int)(Math.random()*inputs.length);
-			this.train(inputs[index], outputs[index], learningRate);
+			this.train(trainingData.getRandomSet(), learningRate);					
 		}
-		
 	}
 	
-	public void train(double[] input_array, double[] target_array, double learningRate) {
+	/**
+	 * Trains the neural network with the given training set and learning rate
+	 * @param trainingSet - a training set
+	 * @param learningRate - the learning rate
+	 * @throws IllegalArgumentException if the length of the inputs in the training set doesnt match the length of the inputs of the neural network or if the learning rate is <= 0
+	 */
+	public void train(TrainingSet trainingSet, double learningRate) {
 		
-		if(input_array.length != this.LAYERS[0]) throw new IllegalArgumentException("" + this.LAYERS[0] + " inputs excpected, but " + input_array.length + " received");
+		if(trainingSet.getInputs().length != this.LAYERS[0]) throw new IllegalArgumentException("" + this.LAYERS[0] + " inputs excpected, but " + trainingSet.getInputs().length + " received");
+		if(learningRate <= 0) throw new IllegalArgumentException("learning rate must be >0");
 		
-		Matrix targets = Matrix.fromArray(target_array);
+		Matrix targets = Matrix.fromArray(trainingSet.getOutputs());
 		Matrix[] outputs = new Matrix[this.LAYERS.length];
-		outputs[0] = Matrix.fromArray(input_array);
+		outputs[0] = Matrix.fromArray(trainingSet.getInputs());
 		
 		Matrix[] noActivationFunctionApplied = outputs;
 		
@@ -174,26 +178,29 @@ public class NeuralNetwork {
 			this.biases[i].add(gradients[i]);
 		}
 	}
-	
-	public double calculateError(double[][] input_data, double[][] output_data) {
-		
-		if(input_data.length != output_data.length) throw new IllegalArgumentException("length of inputs and outputs arrays must be the same");
 
+	/**
+	 * Calculates the mean squared error of every TrainingSet contained in the TrainingData object
+	 * @param trainingData - The data used to calculate the error
+	 * @return - the error
+	 */
+	public double calculateError(TrainingData trainingData) {
+		
 		double mean = 0;
 	
-		for(int data = 0; data < input_data.length; data++) 
-			mean += this.calculateError(input_data[data], output_data[data]);
+		for(int data = 0; data < trainingData.size(); data++) 
+			mean += this.calculateError(trainingData.getTrainingSet(data));
 			
-		return mean/input_data.length;
+		return mean/trainingData.size()	;
 	}
 	
-	private double calculateError(double[] input_array, double[] output_array) {
+	private double calculateError(TrainingSet trainingSet) {
 		
-		if(input_array.length != this.LAYERS[0]) throw new IllegalArgumentException("" + this.LAYERS[0] + " inputs excpected, but " + input_array.length + " received");
+		if(trainingSet.getInputs().length != this.LAYERS[0]) throw new IllegalArgumentException("" + this.LAYERS[0] + " inputs excpected, but " + trainingSet.getInputs().length + " received");
 
-		Matrix targets = Matrix.fromArray(output_array);
+		Matrix targets = Matrix.fromArray(trainingSet.getOutputs());
 		Matrix[] outputs = new Matrix[this.LAYERS.length];
-		outputs[0] = Matrix.fromArray(input_array);
+		outputs[0] = Matrix.fromArray(trainingSet.getInputs());
 		Matrix[] noActivationFunctionApplied = outputs;
 		
 		//calc outputs
