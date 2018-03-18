@@ -3,7 +3,6 @@ package schiemannjeremy.nn;
 import java.util.LinkedList;
 
 public class TrainingData {
-
 	
 	private LinkedList<double[]> training_input_list;
 	private LinkedList<double[]> training_output_list;
