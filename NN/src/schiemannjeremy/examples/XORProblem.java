@@ -9,7 +9,7 @@ public class XORProblem {
 
 	public static void main(String[] args) {
 
-		//create a NN with 2 inputs, 4 hidden and 1 output neuron and TanH as activation function.
+		//create a NN with 2 inputs, 4 hidden and 1 output neuron and TanH as activation function
 		NeuralNetwork nn = new NeuralNetwork(2, 4, 1);
 		nn.setActivationFunction(ActivationFunction.TAN_H);
 		nn.randomizeBiases(-1, 1);
