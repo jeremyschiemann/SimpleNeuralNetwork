@@ -50,7 +50,7 @@ public class PatternShift {
 		};
 		
 		
-		//adding the data to the trainingdata
+		//adding the data to the training data
 		TrainingData td = new TrainingData();
 		for(int i = 0; i < inputs.length; i++) {
 			td.add(new TrainingSet(inputs[i], outputs[i]));

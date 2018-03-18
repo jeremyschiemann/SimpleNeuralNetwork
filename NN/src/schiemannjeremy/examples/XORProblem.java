@@ -45,12 +45,12 @@ public class XORProblem {
 
 		System.out.println(String.format("Error before training: %1.5f\n", nn.calculateError(td)));
 
-		// train the nn 5000 times
+		// train the NN 5000 times
 		for(int x = 0; x < 5000; x ++)
 			for(int i = 0; i < td.size(); i++)
 				nn.train(td.getTrainingSet(i), 0.05);
 
-		// let the nn predict again
+		// let the NN predict again
 		System.out.println("Prediction for [False, True] after training: ");
 		predicted = nn.predict(new double[] { 0, 1 });
 
