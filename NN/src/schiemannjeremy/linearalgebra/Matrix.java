@@ -1,5 +1,6 @@
 package schiemannjeremy.linearalgebra;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.function.Function;
 
@@ -8,8 +9,12 @@ import java.util.function.Function;
  * @author Jeremy Schiemann
  *
  */
-public class Matrix {
+public class Matrix implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5758639842378073608L;
 	private double[][] data;
 	private int rows;
 	private int columns;

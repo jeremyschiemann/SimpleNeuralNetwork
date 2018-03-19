@@ -1,5 +1,6 @@
 package schiemannjeremy.nn;
 
+import java.io.Serializable;
 
 /**
  * A class that wraps the inputs and outputs for the training data
@@ -7,8 +8,12 @@ package schiemannjeremy.nn;
  * @author Jeremy Schiemann
  *
  */
-public class TrainingSet {
+public class TrainingSet implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2155279927467599160L;
 	private double[] inputs;
 	private double[] outputs;
 	

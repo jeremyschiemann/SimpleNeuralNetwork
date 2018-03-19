@@ -1,5 +1,13 @@
 package schiemannjeremy.nn;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
 import schiemannjeremy.linearalgebra.Matrix;
 
 
@@ -8,8 +16,12 @@ import schiemannjeremy.linearalgebra.Matrix;
  * @author Jeremy Schiemann
  *
  */
-public class NeuralNetwork {
+public class NeuralNetwork implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6241970177328998671L;
 	private final int[] LAYERS;
 	private Matrix[] weights;
 	private Matrix[] biases;
@@ -52,6 +64,10 @@ public class NeuralNetwork {
 	 */
 	public void setActivationFunction(ActivationFunction func) {
 		this.func = func;
+	}
+	
+	public ActivationFunction getActivationFunction() {
+		return this.func;
 	}
 	
 	/**
@@ -229,5 +245,47 @@ public class NeuralNetwork {
 		 
 		return Math.sqrt(sum);
 	}
+	
+	/**
+	 * Will write the NeuralNetwork object to the given file. </br>
+	 * This method will create the necessary paths to create this file.
+	 * @param neuralNetwork - the object which should be stored
+	 * @param file - the file where the object should be stored
+	 * @throws IOException - if anything goes wrong during writing...
+	 */
+	public static void save(NeuralNetwork neuralNetwork, File file) throws IOException {
+		
+		if(!file.exists()) file.getParentFile().mkdirs();
+		
+		ObjectOutputStream objO = new ObjectOutputStream(new FileOutputStream(file));
+		objO.writeObject(neuralNetwork);
+		
+		objO.close();
+		
+	}
+
+	/**
+	 * Restores a saved NeuralNetwork object from a File
+	 * @param file - the file where the object is stored
+	 * @return - the restored NeuralNetwork object
+	 * @throws IOException if the file doesnt exist, something goes wrong and so on...
+	 */
+	public static NeuralNetwork restore(File file) throws IOException {
+		
+		ObjectInputStream objI = new ObjectInputStream(new FileInputStream(file));
+		
+		NeuralNetwork nn = null;
+		try {
+			nn = (NeuralNetwork)objI.readObject();
+			
+		}catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		objI.close();
+		
+		return nn;
+	}
+	
 	
 }

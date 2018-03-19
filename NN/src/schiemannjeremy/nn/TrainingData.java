@@ -1,6 +1,17 @@
 package schiemannjeremy.nn;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.util.ArrayList;
+
+import javax.swing.filechooser.FileFilter;
 
 
 /**
@@ -8,8 +19,13 @@ import java.util.ArrayList;
  * @author Jeremy Schiemann
  *
  */
-public class TrainingData {
+public class TrainingData implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1862961912768893897L;
+	private static final String DATA_ENDING = ".ntd";
 	private ArrayList<TrainingSet> trainingSets;
 	
 	/**
@@ -74,5 +90,47 @@ public class TrainingData {
 		int random = (int)(Math.random()*this.trainingSets.size());
 		return this.trainingSets.get(random);	
 	}
+	
+	
+	/**
+	 * Will write the TrainingData object to the given file. </br>
+	 * This method will create the necessary paths to create this file.
+	 * @param trainingData - the object which should be stored
+	 * @param file - the file where the object should be stored
+	 * @throws IOException - if anything goes wrong during writing...
+	 */
+	public static void save(TrainingData trainingData, File file) throws IOException {
+		
+		if(!file.exists()) file.getParentFile().mkdirs();
+		
+		ObjectOutputStream objO = new ObjectOutputStream(new FileOutputStream(file));
+		objO.writeObject(trainingData);
+		
+		objO.close();
+		
+	}
 
+	/**
+	 * Restores a saved TrainingData object from a File
+	 * @param file - the file where the object is stored
+	 * @return - the restored TrainingData object
+	 * @throws IOException if the file doesnt exist, something goes wrong and so on...
+	 */
+	public static TrainingData restore(File file) throws IOException {
+		
+		ObjectInputStream objI = new ObjectInputStream(new FileInputStream(file));
+		
+		TrainingData td = null;
+		try {
+			td = (TrainingData)objI.readObject();
+			
+		}catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		objI.close();
+		
+		return td;
+	}
+	
 }
