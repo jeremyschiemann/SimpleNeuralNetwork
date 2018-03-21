@@ -49,7 +49,7 @@ public class XORProblem {
 		for(int x = 0; x < 5000; x ++)
 			for(int i = 0; i < td.size(); i++)
 				nn.train(td.getTrainingSet(i), 0.05);
-
+		
 		// let the NN predict again
 		System.out.println("Prediction for [False, True] after training: ");
 		predicted = nn.predict(new double[] { 0, 1 });

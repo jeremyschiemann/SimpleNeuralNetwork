@@ -26,6 +26,14 @@ public class NeuralNetwork implements Serializable{
 	private Matrix[] weights;
 	private Matrix[] biases;
 	
+	
+	private Matrix[] errors;
+	private Matrix[] gradients;
+	private Matrix[] outputs;
+	private Matrix[] outputsWithoutActivationFunction;
+	private Matrix[] weightDeltas;
+	
+	
 	private ActivationFunction func;
 	
 	/**
@@ -142,6 +150,7 @@ public class NeuralNetwork implements Serializable{
 		}
 	}
 	
+	
 	/**
 	 * Trains the neural network with the given training set and learning rate
 	 * @param trainingSet - a training set
@@ -149,51 +158,21 @@ public class NeuralNetwork implements Serializable{
 	 * @throws IllegalArgumentException if the length of the inputs in the training set doesnt match the length of the inputs of the neural network or if the learning rate is <= 0
 	 */
 	public void train(TrainingSet trainingSet, double learningRate) {
-		
 		if(trainingSet.getInputs().length != this.LAYERS[0]) throw new IllegalArgumentException("" + this.LAYERS[0] + " inputs excpected, but " + trainingSet.getInputs().length + " received");
 		if(learningRate <= 0) throw new IllegalArgumentException("learning rate must be >0");
 		
 		Matrix targets = Matrix.fromArray(trainingSet.getOutputs());
-		Matrix[] outputs = new Matrix[this.LAYERS.length];
-		outputs[0] = Matrix.fromArray(trainingSet.getInputs());
+		this.outputs = new Matrix[this.LAYERS.length];
+		this.outputs[0] = Matrix.fromArray(trainingSet.getInputs());
 		
-		Matrix[] noActivationFunctionApplied = outputs;
+		this.outputsWithoutActivationFunction = this.outputs;
 		
-		//calc outputs
-		for(int i = 1; i < outputs.length; i++) {
-			outputs[i] = Matrix.mul(this.weights[i-1], outputs[i-1]);
-			outputs[i].add(this.biases[i-1]);
-			noActivationFunctionApplied[i] = outputs[i];
-			outputs[i].map(x -> func.function(x));
-		}
-		
-		//calc error
-		Matrix[] errors = new Matrix[outputs.length-1];
-		errors[errors.length-1] = Matrix.sub(targets, outputs[outputs.length-1]);
-		
-		for(int i = errors.length-1; i > 0; i--) {
-			
-			errors[i-1] = Matrix.mul(Matrix.transpose(this.weights[i]), errors[i]);
-		}
-	
-		Matrix[] gradients = new Matrix[outputs.length-1];
-		Matrix[] weight_deltas = new Matrix[outputs.length-1];
-		
-		for(int i = outputs.length-2; i >= 0; i--) {
-			
-			//calc gradients
-			gradients[i] = Matrix.map(noActivationFunctionApplied[i+1], y -> func.derivatedFunction(y));
-			gradients[i].hadamardProduct(errors[i]);
-			gradients[i].mul(learningRate);
-			
-			//calc weight delta
-			weight_deltas[i] = Matrix.mul(gradients[i], Matrix.transpose(outputs[i]));
-			
-			//adjust weight and biases
-			this.weights[i].add(weight_deltas[i]);
-			this.biases[i].add(gradients[i]);
-		}
+		calcOutputs();
+		calcErrors(targets);
+		calcDeltaGradientsAndApply(learningRate);
 	}
+	
+
 
 	/**
 	 * Calculates the mean squared error of every TrainingSet contained in the TrainingData object
@@ -209,41 +188,83 @@ public class NeuralNetwork implements Serializable{
 			
 		return mean/trainingData.size()	;
 	}
+
 	
 	private double calculateError(TrainingSet trainingSet) {
 		
 		if(trainingSet.getInputs().length != this.LAYERS[0]) throw new IllegalArgumentException("" + this.LAYERS[0] + " inputs excpected, but " + trainingSet.getInputs().length + " received");
 
 		Matrix targets = Matrix.fromArray(trainingSet.getOutputs());
-		Matrix[] outputs = new Matrix[this.LAYERS.length];
-		outputs[0] = Matrix.fromArray(trainingSet.getInputs());
-		Matrix[] noActivationFunctionApplied = outputs;
+		if(this.outputs == null)
+			this.outputs = new Matrix[this.LAYERS.length];
+		
+		this.outputs[0] = Matrix.fromArray(trainingSet.getInputs());
 		
 		//calc outputs
-		for(int i = 1; i < outputs.length; i++) {
-			outputs[i] = Matrix.mul(this.weights[i-1], outputs[i-1]);
-			outputs[i].add(this.biases[i-1]);
-			noActivationFunctionApplied[i] = outputs[i];
-			outputs[i].map(x -> func.function(x));
-		}
+		calcOutputs();
 		
 		//calc error
-		Matrix[] errors = new Matrix[outputs.length-1];
-		errors[errors.length-1] = Matrix.sub(targets, outputs[outputs.length-1]);
-		
-		for(int i = errors.length-1; i > 0; i--) {
-			
-			errors[i-1] = Matrix.mul(Matrix.transpose(this.weights[i]), errors[i]);
-		}
+		calcErrors(targets);
 		
 		double sum = 0.0;
-		for(int i = 0; i < errors[errors.length-1].toArray().length; i++) {
-			sum += Math.pow(errors[errors.length-1].toArray()[i], 2);
+		for(int i = 0; i < this.errors[this.errors.length-1].toArray().length; i++) {
+			sum += Math.pow(this.errors[this.errors.length-1].toArray()[i], 2);
 		}
 		
-		sum /= errors[errors.length-1].toArray().length;
+		sum /= this.errors[this.errors.length-1].toArray().length;
 		 
 		return Math.sqrt(sum);
+	}
+	
+	private void calcDeltaGradientsAndApply(double learningRate) {
+		
+		if(this.gradients == null)
+			this.gradients = new Matrix[this.outputs.length-1];
+		
+		if(this.weightDeltas == null)
+			this.weightDeltas = new Matrix[this.outputs.length-1];
+		
+		for(int i = this.outputs.length-2; i >= 0; i--) {
+			
+			//calc gradients
+			this.gradients[i] = Matrix.map(this.outputsWithoutActivationFunction[i+1], y -> func.derivatedFunction(y));
+			this.gradients[i].hadamardProduct(this.errors[i]);
+			this.gradients[i].mul(learningRate);
+			
+			//calc weight delta
+			this.weightDeltas[i] = Matrix.mul(this.gradients[i], Matrix.transpose(this.outputs[i]));
+			
+			//adjust weight and biases
+			this.weights[i].add(this.weightDeltas[i]);
+			this.biases[i].add(this.gradients[i]);
+			
+		}
+	}
+	
+	private void calcErrors(Matrix targets) {
+		
+		if(this.errors == null)
+			this.errors = new Matrix[outputs.length-1];
+		
+		this.errors[this.errors.length-1] = Matrix.sub(targets, this.outputs[this.outputs.length-1]);
+		
+		for(int i = this.errors.length-1; i > 0; i--) {
+			
+			this.errors[i-1] = Matrix.mul(Matrix.transpose(this.weights[i]), this.errors[i]);
+		}
+	}
+	
+
+	private void calcOutputs() {
+		
+		this.outputsWithoutActivationFunction = this.outputs;
+		
+		for(int i = 1; i < this.outputs.length; i++) {
+			this.outputs[i] = Matrix.mul(this.weights[i-1], this.outputs[i-1]);
+			this.outputs[i].add(this.biases[i-1]);
+			this.outputsWithoutActivationFunction[i] = this.outputs[i];
+			this.outputs[i].map(x -> func.function(x));
+		}
 	}
 	
 	/**
